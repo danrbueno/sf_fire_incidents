@@ -1,0 +1,81 @@
+{
+	"jobConfig": {
+		"name": "sf-fire-incidents-glue-job",
+		"description": "",
+		"role": "arn:aws:iam::533267234761:role/sf-fire-incidents-role",
+		"command": "glueetl",
+		"version": "4.0",
+		"runtime": null,
+		"workerType": "G.1X",
+		"numberOfWorkers": 10,
+		"maxCapacity": 10,
+		"jobRunQueuingEnabled": false,
+		"maxRetries": 0,
+		"timeout": 2880,
+		"maxConcurrentRuns": 1,
+		"security": "none",
+		"scriptName": "sf-fire-incidents-glue-job.py",
+		"scriptLocation": "s3://aws-glue-assets-533267234761-sa-east-1/scripts/",
+		"language": "python-3",
+		"spark": true,
+		"sparkConfiguration": "standard",
+		"jobParameters": [
+			{
+				"key": "--additional-python-modules",
+				"value": "sodapy",
+				"existing": false
+			},
+			{
+				"key": "--S3_BUCKET",
+				"value": "sf-fire-incidents-datalake",
+				"existing": false
+			},
+			{
+				"key": "--PROCESSED_DIR",
+				"value": "processed",
+				"existing": false
+			},
+			{
+				"key": "--API_END_POINT",
+				"value": "data.sfgov.org",
+				"existing": false
+			},
+			{
+				"key": "--PAGE_SIZE",
+				"value": "10000",
+				"existing": false
+			},
+			{
+				"key": "--API_DATASET",
+				"value": "wr8u-xric",
+				"existing": false
+			},
+			{
+				"key": "--COALESCE",
+				"value": "1",
+				"existing": false
+			}
+		],
+		"tags": [],
+		"jobMode": "DEVELOPER_MODE",
+		"createdOn": "2025-05-01T16:02:07.564Z",
+		"developerMode": true,
+		"connectionsList": [],
+		"temporaryDirectory": "s3://aws-glue-assets-533267234761-sa-east-1/temporary/",
+		"logging": true,
+		"glueHiveMetastore": true,
+		"etlAutoTuning": true,
+		"metrics": true,
+		"observabilityMetrics": true,
+		"bookmark": "job-bookmark-disable",
+		"sparkPath": "s3://aws-glue-assets-533267234761-sa-east-1/sparkHistoryLogs/",
+		"flexExecution": false,
+		"minFlexWorkers": null,
+		"maintenanceWindow": null,
+		"dataLineage": false,
+		"pythonPath": null
+	},
+	"hasBeenSaved": false,
+	"usageProfileName": null,
+	"script": "import pandas as pd\r\nimport boto3\r\nimport io\r\nimport logging\r\nfrom sodapy import Socrata\r\nfrom pyspark.sql import SparkSession\r\nfrom pyspark.sql.functions import col\r\nfrom pyspark.sql.types import StringType\r\nfrom awsglue.utils import getResolvedOptions\r\nimport sys\r\n\r\n# Configure logging\r\nlogging.basicConfig(\r\n    format=\"%(asctime)s - %(levelname)s - %(message)s\",\r\n    level=logging.INFO\r\n)\r\n\r\ndef get_job_params():\r\n    \"\"\"Retrieve job parameters from AWS Glue.\"\"\"\r\n    args = getResolvedOptions(sys.argv, [\"S3_BUCKET\", \"PROCESSED_DIR\", \"API_END_POINT\", \"PAGE_SIZE\", \"API_DATASET\", \"COALESCE\"])\r\n    return {\r\n        \"S3_BUCKET\": args[\"S3_BUCKET\"],\r\n        \"PROCESSED_DIR\": args[\"PROCESSED_DIR\"],\r\n        \"API_END_POINT\": args[\"API_END_POINT\"],\r\n        \"PAGE_SIZE\": int(args[\"PAGE_SIZE\"]),\r\n        \"API_DATASET\": args[\"API_DATASET\"],\r\n        \"COALESCE\": int(args[\"COALESCE\"])\r\n    }\r\n\r\ndef initialize_spark():\r\n    \"\"\"Initialize Spark session.\"\"\"\r\n    logging.info(\"Initializing Spark session\")\r\n    return SparkSession.builder.appName(\"FireIncidentsETL\").getOrCreate()\r\n\r\ndef extract_data(api_endpoint, api_dataset, page_size):\r\n    \"\"\"Fetch fire incident data from API using pagination.\"\"\"\r\n    client = Socrata(api_endpoint, None)\r\n    offset = 0\r\n    all_data = []\r\n\r\n    while offset == 0:  # Change to `while True:` for full pagination\r\n        data = client.get(api_dataset, limit=page_size, offset=offset)\r\n\r\n        if not data:\r\n            break\r\n        \r\n        all_data.extend(data)\r\n        offset += page_size\r\n\r\n        logging.info(f\"Fetched {len(data)} records, total so far: {len(all_data)}\")\r\n\r\n    return pd.DataFrame.from_records(all_data)\r\n\r\ndef transform_data(df_pandas):\r\n    \"\"\"Transform data: Fix data types, drop duplicates, and clean null values.\"\"\"\r\n    df_pandas = df_pandas.astype(str)  # Convert all columns to string type\r\n\r\n    logging.info(f\"Converted API data to Pandas DataFrame with {len(df_pandas)} records\")\r\n\r\n    # Convert Pandas DataFrame to Spark DataFrame\r\n    spark = initialize_spark()\r\n    df = spark.createDataFrame(df_pandas)\r\n\r\n    # Ensure all columns remain as strings in PySpark\r\n    for column in df.columns:\r\n        df = df.withColumn(column, col(column).cast(StringType()))\r\n\r\n    logging.info(\"Resolved type inconsistencies dynamically\")\r\n\r\n    # Drop missing values & deduplicate\r\n    df_transformed = df.dropna().distinct()\r\n\r\n    logging.info(f\"Processed {df_transformed.count()} unique records after cleaning\")\r\n\r\n    return df_transformed\r\n\r\ndef load_data(df_transformed, s3_bucket, processed_dir, coalesce_factor):\r\n    \"\"\"Save processed data to S3 in partitioned Parquet format.\"\"\"\r\n    processed_path = f\"s3://{s3_bucket}/{processed_dir}/\"\r\n    \r\n    df_transformed.coalesce(coalesce_factor).write.mode(\"overwrite\").partitionBy(\"battalion\").parquet(processed_path)\r\n\r\n    logging.info(\"Fire incidents extracted, transformed, and stored in partitioned Parquet format\")\r\n\r\ndef main():\r\n    \"\"\"Main function to orchestrate ETL process.\"\"\"\r\n    logging.info(\"AWS Glue ETL Job Started\")\r\n\r\n    # Retrieve job parameters\r\n    params = get_job_params()\r\n\r\n    # Extract Data\r\n    df_pandas = extract_data(params[\"API_END_POINT\"], params[\"API_DATASET\"], params[\"PAGE_SIZE\"])\r\n\r\n    # Transform Data\r\n    df_transformed = transform_data(df_pandas)\r\n\r\n    # Load Data\r\n    load_data(df_transformed, params[\"S3_BUCKET\"], params[\"PROCESSED_DIR\"], params[\"COALESCE\"])\r\n\r\n    logging.info(\"AWS Glue ETL Job Completed Successfully\")\r\n\r\n# Run the ETL Job\r\nif __name__ == \"__main__\":\r\n    main()"
+}
