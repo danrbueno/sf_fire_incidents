@@ -1,8 +1,8 @@
 {
 	"jobConfig": {
 		"name": "sf-fire-incidents-glue-job",
-		"description": "",
-		"role": "arn:aws:iam::533267234761:role/sf-fire-incidents-role",
+		"description": "ETL for San Francisco fire incidents data analysis.\n- Extract data from data.sfgov.org;\n- Fix data types, drop duplicates, and clean null values;\n- Save processed data to S3 in partitioned Parquet format;",
+		"role": "arn:aws:iam::<account_id>:role/sf-fire-incidents-role",
 		"command": "glueetl",
 		"version": "4.0",
 		"runtime": null,
@@ -14,25 +14,15 @@
 		"timeout": 2880,
 		"maxConcurrentRuns": 1,
 		"security": "none",
-		"scriptName": "sf-fire-incidents-glue-job.py",
-		"scriptLocation": "s3://aws-glue-assets-533267234761-sa-east-1/scripts/",
+		"scriptName": "<glue_job_name>.py",
+		"scriptLocation": "s3://aws-glue-assets-<account_id>-sa-east-1/scripts/",
 		"language": "python-3",
 		"spark": true,
 		"sparkConfiguration": "standard",
 		"jobParameters": [
 			{
-				"key": "--additional-python-modules",
-				"value": "sodapy",
-				"existing": false
-			},
-			{
-				"key": "--S3_BUCKET",
-				"value": "sf-fire-incidents-datalake",
-				"existing": false
-			},
-			{
-				"key": "--PROCESSED_DIR",
-				"value": "processed",
+				"key": "--API_DATASET",
+				"value": "wr8u-xric",
 				"existing": false
 			},
 			{
@@ -41,18 +31,28 @@
 				"existing": false
 			},
 			{
+				"key": "--COALESCE",
+				"value": "1",
+				"existing": false
+			},
+			{
 				"key": "--PAGE_SIZE",
 				"value": "10000",
 				"existing": false
 			},
 			{
-				"key": "--API_DATASET",
-				"value": "wr8u-xric",
+				"key": "--PROCESSED_DIR",
+				"value": "processed",
 				"existing": false
 			},
 			{
-				"key": "--COALESCE",
-				"value": "1",
+				"key": "--S3_BUCKET",
+				"value": "<bucket_name>",
+				"existing": false
+			},
+			{
+				"key": "--additional-python-modules",
+				"value": "sodapy",
 				"existing": false
 			}
 		],
@@ -61,14 +61,14 @@
 		"createdOn": "2025-05-01T16:02:07.564Z",
 		"developerMode": true,
 		"connectionsList": [],
-		"temporaryDirectory": "s3://aws-glue-assets-533267234761-sa-east-1/temporary/",
+		"temporaryDirectory": "s3://aws-glue-assets-<account_id>-sa-east-1/temporary/",
 		"logging": true,
 		"glueHiveMetastore": true,
 		"etlAutoTuning": true,
 		"metrics": true,
 		"observabilityMetrics": true,
 		"bookmark": "job-bookmark-disable",
-		"sparkPath": "s3://aws-glue-assets-533267234761-sa-east-1/sparkHistoryLogs/",
+		"sparkPath": "s3://aws-glue-assets-<account_id>-sa-east-1/sparkHistoryLogs/",
 		"flexExecution": false,
 		"minFlexWorkers": null,
 		"maintenanceWindow": null,
