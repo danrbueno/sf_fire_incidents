@@ -1,3 +1,11 @@
+- [Challenge](#challenge)
+- [Description](#description)
+- [Solution](#solution)
+- [Assumptions](#assumptions)
+- [ETL Process](#etl-process)
+- [Setup AWS environment](#setup-aws-environment)
+- [Final Report](#final-report)
+
 # Challenge
 Build a data pipeline to analize fire incidents data in San Francisco.
 
@@ -63,5 +71,5 @@ The job that process the ETL. Import the job script and JSON, by following the s
 - Updating partitions in table 'fire_incidents':
     - Copy the content of the file <code>database\update_partitions.sql</code> and execute;
 
-# Final Report:
+# Final Report
 [📑 Fire Incidents Report](https://github.com/danrbueno/sf_fire_incidents/blob/main/report/sf_fire_incidents_report.pdf)
