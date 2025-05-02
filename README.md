@@ -64,3 +64,4 @@ The job that process the ETL. Import the job script and JSON, by following the s
     - Copy the content of the file <code>database\update_partitions.sql</code> and execute;
 
 # Final Report:
+[📑 Fire Incidents Report](https://github.com/danrbueno/sf_fire_incidents/blob/main/report/sf_fire_incidents_report.pdf)
