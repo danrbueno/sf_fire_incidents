@@ -10,9 +10,27 @@ For this challenge, the technologies used were:
 - AWS Glue Jobs, for ETL;
 - AWS S3, for storage;
 - AWS Athena, for queries;
+- AWS QuickSight for reports;
+
+# Assumptions
+- API: <code>https://data.sfgov.org/resource/wr8u-xric.json</code>
+    - No authentication needed
+- Date filter: '<code>incident_date >= --FROM_DATE</code>'
+    - --FROM_DATE initially >= 2024-01, if you want to change it, just put another value in this job parameter.
+    - Valid formats: 'yyyy-mm-dd', 'yyyy-mm' or 'yyyy'
+- 'Time Period' is based on field 'incident_date'
+- 'District' is based on field 'neighborhood_district'
+
+# ETL Process
+- Extraction:
+    - Fectch the data from API and put into a staging pandas dataframe
+- Transformations:
+    - Fix data types, replace NaN values and clean nulls
+- Load:
+    - Load the transformed data in a AWS S3 bucket in parquet files
 
 # Setup AWS environment
-1) AWS S3 (Needed to store data from API)
+1) AWS S3
 - Go to AWS Console -> S3
 - Click "Create Bucket"
 - Choose a unique name, for this project the name chosen was 'sf-fire-incidents-datalake' 
@@ -44,3 +62,5 @@ The job that process the ETL. Import the job script and JSON, by following the s
     - Copy the content of the file <code>database\create_table.sql</code> and execute;
 - Updating partitions in table 'fire_incidents':
     - Copy the content of the file <code>database\update_partitions.sql</code> and execute;
+
+5) Report:

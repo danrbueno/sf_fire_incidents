@@ -50,7 +50,7 @@ def extract_data(api_endpoint, api_dataset, page_size, from_date):
         all_data.extend(data)
         offset += page_size
 
-        logging.info(f"Fetched {len(data)} records, total so far: {len(all_data)}")
+        logging.info(f"Fetched {len(data)} records where {where}, total so far: {len(all_data)}")
 
     return pd.DataFrame.from_records(all_data)
 
@@ -59,6 +59,9 @@ def transform_data(df_pandas):
     
     # Convert all columns to string type and replace 'nan' with empty strings
     df_pandas = df_pandas.astype(str).replace("nan", "")
+    
+    # Remove rows where 'neighborhood_district' is empty
+    df_pandas = df_pandas[df_pandas["neighborhood_district"].str.strip() != ""]
     
     logging.info(f"Converted API data to Pandas DataFrame with {len(df_pandas)} records")
 
