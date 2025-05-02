@@ -39,6 +39,10 @@
 				"key": "--PAGE_SIZE",
 				"value": "10000",
 				"existing": false
+			},			{
+				"key": "--FROM_DATE",
+				"value": "2024-01",
+				"existing": false
 			},
 			{
 				"key": "--PROCESSED_DIR",

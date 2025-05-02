@@ -23,6 +23,7 @@ def get_job_params():
         "PROCESSED_DIR": args["PROCESSED_DIR"],
         "API_END_POINT": args["API_END_POINT"],
         "PAGE_SIZE": int(args["PAGE_SIZE"]),
+        "FROM_DATE": args["FROM_DATE"],
         "API_DATASET": args["API_DATASET"],
         "COALESCE": int(args["COALESCE"])
     }
@@ -32,14 +33,16 @@ def initialize_spark():
     logging.info("Initializing Spark session")
     return SparkSession.builder.appName("FireIncidentsETL").getOrCreate()
 
-def extract_data(api_endpoint, api_dataset, page_size):
-    """Fetch fire incident data from API using pagination."""
+def extract_data(api_endpoint, api_dataset, page_size, from_date):
+    """Fetch fire incident data from API using pagination and date filter."""
     client = Socrata(api_endpoint, None)
     offset = 0
     all_data = []
 
-    while offset == 0:  # Change to `while True:` for full pagination
-        data = client.get(api_dataset, limit=page_size, offset=offset)
+    # while offset == 0:  # Just page 1
+    while True: # Full pagination
+        where = f"incident_date >= '{from_date}'"
+        data = client.get(api_dataset, limit=page_size, offset=offset, where=where)
 
         if not data:
             break
@@ -52,9 +55,11 @@ def extract_data(api_endpoint, api_dataset, page_size):
     return pd.DataFrame.from_records(all_data)
 
 def transform_data(df_pandas):
-    """Transform data: Fix data types, drop duplicates, and clean null values."""
-    df_pandas = df_pandas.astype(str)  # Convert all columns to string type
-
+    """Transform data: Fix data types, replace NaN values, drop duplicates, and clean nulls."""
+    
+    # Convert all columns to string type and replace 'nan' with empty strings
+    df_pandas = df_pandas.astype(str).replace("nan", "")
+    
     logging.info(f"Converted API data to Pandas DataFrame with {len(df_pandas)} records")
 
     # Convert Pandas DataFrame to Spark DataFrame
@@ -90,7 +95,7 @@ def main():
     params = get_job_params()
 
     # Extract Data
-    df_pandas = extract_data(params["API_END_POINT"], params["API_DATASET"], params["PAGE_SIZE"])
+    df_pandas = extract_data(params["API_END_POINT"], params["API_DATASET"], params["PAGE_SIZE"], params["FROM_DATE"])
 
     # Transform Data
     df_transformed = transform_data(df_pandas)
