@@ -9,11 +9,7 @@
 				"s3:ListBucket",
 				"s3:DeleteObject"
 			],
-			"Resource": [
-				"arn:aws:s3:::<bucket_name>",
-				"arn:aws:s3:::<bucket_name>/*",
-				"arn:aws:s3:::aws-glue-assets-<account_id>-sa-east-1/scripts/<glue_job_name>.py"
-			]
+			"Resource": "*"
 		},
 		{
 			"Effect": "Allow",

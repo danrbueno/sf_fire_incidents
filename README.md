@@ -23,8 +23,6 @@ This role grants Glue permissions to read/write to S3 and run ETL scripts.
 - Go to AWS IAM -> Roles -> Create Role
 - Choose AWS Glue as the trusted entity
 - Attach permissions policy defined at <code>\config\sf-fire-incidents-policy.json</code>
-    - Remember to change the references of your bucket name, AWS account id and job name in this file.
-        - Search for <code><account_id></code>, <code><bucket_name></code> and <code><glue_job_name></code> to make the changes.
 
 3) Glue Jobs:
 The job that process the ETL. Import the job script and JSON, by following the steps below:
@@ -37,3 +35,12 @@ The job that process the ETL. Import the job script and JSON, by following the s
     - Remember to change the references of your bucket name, AWS account id and job name in this file.
         - Search for <code><account_id></code>, <code><bucket_name></code> and <code><glue_job_name></code> to make the changes.
 - Go to tab 'Schedule' and create a scheduled execution with the frequency you need it.
+
+4) Athena:
+- Go to AWS Athena -> Query Editor and execute the DDL's below:
+- Creating database 'sf_fire_incidents_db':
+    - Copy the content of the file <code>database\create_database.sql</code> and execute;
+- Creating table 'fire_incidents':
+    - Copy the content of the file <code>database\create_table.sql</code> and execute;
+- Updating partitions in table 'fire_incidents':
+    - Copy the content of the file <code>database\update_partitions.sql</code> and execute;
