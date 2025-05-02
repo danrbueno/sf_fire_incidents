@@ -17,7 +17,7 @@ logging.basicConfig(
 
 def get_job_params():
     """Retrieve job parameters from AWS Glue."""
-    args = getResolvedOptions(sys.argv, ["S3_BUCKET", "PROCESSED_DIR", "API_END_POINT", "PAGE_SIZE", "API_DATASET", "COALESCE"])
+    args = getResolvedOptions(sys.argv, ["S3_BUCKET", "PROCESSED_DIR", "API_END_POINT", "PAGE_SIZE", "FROM_DATE", "API_DATASET", "COALESCE"])
     return {
         "S3_BUCKET": args["S3_BUCKET"],
         "PROCESSED_DIR": args["PROCESSED_DIR"],
