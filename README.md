@@ -4,6 +4,10 @@
 - [Assumptions](#assumptions)
 - [ETL Process](#etl-process)
 - [Setup AWS environment](#setup-aws-environment)
+  - [AWS S3](#aws-s3)
+  - [IAM Role](#iam-role)
+  - [Glue Jobs](#glue-jobs)
+  - [Athena](#athena)
 - [Final Report](#final-report)
 
 # Challenge
@@ -38,19 +42,19 @@ For this challenge, the technologies used were:
     - Load the transformed data in a AWS S3 bucket in parquet files
 
 # Setup AWS environment
-1) AWS S3
+## AWS S3
 - Go to AWS Console -> S3
 - Click "Create Bucket"
 - Choose a unique name, for this project the name chosen was 'sf-fire-incidents-datalake' 
     - You have to choose another name, because it's unique
 
-2) IAM Role (needed for Glue to save parquets in S3 and logs in CloudWatch):
-This role grants Glue permissions to read/write to S3 and run ETL scripts.
+## IAM Role
+This role grants Glue permissions to read/write files in S3, run ETL scripts and save logs in AWS CloudWatch.
 - Go to AWS IAM -> Roles -> Create Role
 - Choose AWS Glue as the trusted entity
 - Attach permissions policy defined at <code>\config\sf-fire-incidents-policy.json</code>
 
-3) Glue Jobs:
+## Glue Jobs
 The job that process the ETL. Import the job script and JSON, by following the steps below:
 - Go to AWS Glue -> ETL Jobs -> Create job -> Script editor
 - Choose 'Spark' in 'Engine' field
@@ -62,7 +66,7 @@ The job that process the ETL. Import the job script and JSON, by following the s
         - Search for <code><account_id></code>, <code><bucket_name></code> and <code><glue_job_name></code> to make the changes.
 - Go to tab 'Schedule' and create a scheduled execution with the frequency you need it.
 
-4) Athena:
+## Athena
 - Go to AWS Athena -> Query Editor and execute the DDL's below:
 - Creating database 'sf_fire_incidents_db':
     - Copy the content of the file <code>database\create_database.sql</code> and execute;
